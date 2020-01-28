@@ -302,10 +302,11 @@ class OADRCreatedPartyRegistrationBuilder(PayloadXML):
     An instance of this class is created after the VTN receives an oadrQueryRegistration.
     """
 
-    def __init__(self, requestID, venID):
+    def __init__(self, requestID, venID, registrationID):
         super(self.__class__, self).__init__('oadrCreatedPartyRegistration')
         self.requestID = requestID
         self.venID = venID
+        self.registrationID = registrationID
 
     def build(self):
         
@@ -322,6 +323,7 @@ class OADRCreatedPartyRegistrationBuilder(PayloadXML):
                                                                               request_id=self.requestID),
                                                  vtnID=settings.VTN_ID,
                                                  venID=self.venID,
+                                                 registrationID=oadr_20b.CustomRegistrationID(self.registrationID),
                                                  oadrRequestedOadrPollFreq=duration,
                                                  oadrProfiles=oadrProfiles)
         return xml

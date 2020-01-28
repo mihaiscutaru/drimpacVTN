@@ -3095,6 +3095,13 @@ class oadrCreatePartyRegistrationType(GeneratedsSuper):
             self.oadrHttpPullModel = ival_
 # end class oadrCreatePartyRegistrationType
 
+class CustomRegistrationID(GeneratedsSuper):
+    def __init__(self, registrationID):
+        self.registrationID = registrationID
+
+    def export(self, outfile, level, namespace_='oadr:', name_='registrationID', namespacedef_='xmlns:oadr="http://openadr.org/oadr-2.0b/2012/07"', pretty_print=True):
+        outfile.write('<ei:registrationID>%s</ei:registrationID>\n' % (self.registrationID))
+# end class CustomRegistrationID
 
 class oadrCreatedPartyRegistrationType(GeneratedsSuper):
     subclass = None

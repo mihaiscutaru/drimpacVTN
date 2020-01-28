@@ -450,7 +450,7 @@ class EIEvent(APIView):
                                                        BOGUS_REQUEST_ID,
                                                        response_description)
                 payload_xml = payload_response.wrap()
-                logger.warning("Elements missing in VEN's RequestEvent XML")
+                logger.warning("Elements missing in VEN's RequestEvent XML, %s" % err)
                 return Response({'result' : payload_xml}, content_type='application/xml', status=status.HTTP_400_BAD_REQUEST)
 
         # IS THIS A CREATED EVENT?
@@ -539,7 +539,7 @@ class EIRegisterParty(APIView):
     def post(self, request, format=None):
         if request.data.oadrSignedObject.oadrQueryRegistration is not None:
             request_ID = request.data.oadrSignedObject.oadrQueryRegistration.requestID
-            payload_registered_report = OADRCreatedPartyRegistrationBuilder(request_ID,None)
+            payload_registered_report = OADRCreatedPartyRegistrationBuilder(request_ID,"","")
             payload_xml = payload_registered_report.wrap()
 
             return Response({'result' : payload_xml}, content_type='application/xml')
@@ -553,7 +553,8 @@ class EIRegisterParty(APIView):
             oadrXmlSignature = request.data.oadrSignedObject.oadrCreatePartyRegistration.oadrXmlSignature
             oadrVenName = request.data.oadrSignedObject.oadrCreatePartyRegistration.oadrVenName
             oadrHttpPullModel = request.data.oadrSignedObject.oadrCreatePartyRegistration.oadrHttpPullModel
-            payload_registered_report = OADRCreatedPartyRegistrationBuilder(request_ID, venID)
+            registrationID = "hardcodedRegistrationID"
+            payload_registered_report = OADRCreatedPartyRegistrationBuilder(request_ID, venID, registrationID)
             payload_xml = payload_registered_report.wrap()
             
             return Response({'result' : payload_xml}, content_type='application/xml', status=status.HTTP_200_OK)
