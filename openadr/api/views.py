@@ -237,7 +237,6 @@ class EIReport(APIView):
     @csrf_exempt
     def post(self, request, format=None):
 
-        # CHECK IF REGISTER REPORT WAS SENT
         if request.data.oadrSignedObject.oadrRegisterReport is not None:
             try:
                 ven_id = request.data.oadrSignedObject.oadrRegisterReport.venID
@@ -247,6 +246,9 @@ class EIReport(APIView):
                 for oadr_report in oadr_reports:
                     try:
                         report_specifier_id = oadr_report.reportSpecifierID
+                        payload_registered_report = OADRRegisteredReportBuilder(ven_id, report_specifier_id)
+                        payload_registered_xml = payload_registered_report.wrap()
+                        update_last_status_time(ven_id)
 
                     except AttributeError as err:
                         payload_response = OADRResponseBuilder(SCHEMA_VERSION,
@@ -259,11 +261,7 @@ class EIReport(APIView):
                         logging.warning("No report specifier ID found in RegisterReport")
                         return Response({'result' : payload_xml}, content_type='application/xml',
                                         status=status.HTTP_400_BAD_REQUEST)
-
-                    payload_registered_report = OADRRegisteredReportBuilder(ven_id, report_specifier_id)
-                    payload_registered_xml = payload_registered_report.wrap()
-                    update_last_status_time(ven_id)
-                    return Response({'result' : payload_registered_xml}, content_type='application/xml',
+                return Response({'result' : payload_registered_xml}, content_type='application/xml',
                                     status=status.HTTP_200_OK)
 
             except (AttributeError, Exception) as err:
@@ -429,11 +427,10 @@ class EIEvent(APIView):
 
     @csrf_exempt
     def post(self, request, format=None):
-
         # IS THIS A REQUEST EVENT?
         if request.data.oadrSignedObject.oadrRequestEvent is not None:
             try:
-                ven_id = request.data.oadrSignedObject.oadrRequestEvent.venID
+                ven_id = request.data.oadrSignedObject.oadrRequestEvent.eiRequestEvent.venID
 
                 site_events = SiteEvent.objects.filter(site__ven_id=ven_id,
                                                        dr_event__scheduled_notification_time__lt=timezone.now()) \
@@ -532,3 +529,31 @@ class EIEvent(APIView):
                                                    response_description)
             payload_xml = payload_response.wrap()
             return Response({'result' : payload_xml}, content_type='application/xml', status=status.HTTP_204_NO_CONTENT)
+
+
+class EIRegisterParty(APIView):
+    parser_classes = (OADRParser,)
+    renderer_classes = (OADRRenderer,)
+
+    @csrf_exempt
+    def post(self, request, format=None):
+        if request.data.oadrSignedObject.oadrQueryRegistration is not None:
+            request_ID = request.data.oadrSignedObject.oadrQueryRegistration.requestID
+            payload_registered_report = OADRCreatedPartyRegistrationBuilder(request_ID,None)
+            payload_xml = payload_registered_report.wrap()
+
+            return Response({'result' : payload_xml}, content_type='application/xml')
+        elif request.data.oadrSignedObject.oadrCreatePartyRegistration is not None:
+            request_ID = request.data.oadrSignedObject.oadrCreatePartyRegistration.requestID
+            venID = request.data.oadrSignedObject.oadrCreatePartyRegistration.venID
+            oadrProfileName = request.data.oadrSignedObject.oadrCreatePartyRegistration.oadrProfileName
+            oadrTransportName = request.data.oadrSignedObject.oadrCreatePartyRegistration.oadrTransportName
+            #oadrTransportAddress = request.data.oadrSignedObject.oadrCreatePartyRegistration.oadrTransportAddress
+            oadrReportOnly = request.data.oadrSignedObject.oadrCreatePartyRegistration.oadrReportOnly
+            oadrXmlSignature = request.data.oadrSignedObject.oadrCreatePartyRegistration.oadrXmlSignature
+            oadrVenName = request.data.oadrSignedObject.oadrCreatePartyRegistration.oadrVenName
+            oadrHttpPullModel = request.data.oadrSignedObject.oadrCreatePartyRegistration.oadrHttpPullModel
+            payload_registered_report = OADRCreatedPartyRegistrationBuilder(request_ID, venID)
+            payload_xml = payload_registered_report.wrap()
+            
+            return Response({'result' : payload_xml}, content_type='application/xml', status=status.HTTP_200_OK)

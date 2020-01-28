@@ -118,9 +118,9 @@ REST_FRAMEWORK = {
 DATABASES = {
     'default': {
         'ENGINE': 'django.db.backends.postgresql_psycopg2',
-        'NAME': 'openadr',
-        'USER': 'django_user',
-        'PASSWORD': 'openadr*1',
+        'NAME': 'drimpac',
+        'USER': 'drimpac',
+        'PASSWORD': 'Drimpac2020!',
         'HOST': '',
         'PORT': '',
     }
@@ -174,7 +174,7 @@ DATETIME_FORMAT = "n/j/Y g:i A"
 
 VTN_ID = 'vtn01'
 
-ONLINE_INTERVAL_MINUTES = 15
+ONLINE_INTERVAL_MINUTES = 1
 
 GRAPH_TIMECHUNK_SECONDS = 60
 

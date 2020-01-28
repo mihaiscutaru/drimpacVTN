@@ -150,7 +150,8 @@ class OADRDistributeEventBuilder(PayloadXML):
     def build_ei_event(self, site_event):
         return oadr_20b.eiEventType(eventDescriptor=self.build_event_descriptor(site_event),
                                     eiActivePeriod=self.build_active_period(site_event),
-                                    eiEventSignals=self.build_ei_signals(site_event))
+                                    eiEventSignals=self.build_ei_signals(site_event),
+                                    eiTarget=oadr_20b.EiTargetType(venID=self.ven_id))
 
     @staticmethod
     def build_event_descriptor(site_event):
@@ -244,12 +245,117 @@ class OADRRegisteredReportBuilder(PayloadXML):
 
     def build(self):
 
-        return oadr_20b.oadrRegisteredReportType(schemaVersion=SCHEMA_VERSION,
+        xml = oadr_20b.oadrRegisteredReportType(schemaVersion=SCHEMA_VERSION,
                                                  eiResponse=build_ei_response(status=STATUS_OK,
                                                                               response_description='OK',
                                                                               request_id=BOGUS_REQUEST_ID),
                                                  oadrReportRequest=self.build_oadr_report_request(),
                                                  venID=self.ven_id)
+        return xml
+
+    def build_oadr_report_request(self):
+
+        all_report_request_ids = [int(r.report_request_id) for r in Report.objects.all()]
+        all_report_request_ids.sort()
+        report_request_id = str(all_report_request_ids[-1] + 1) if len(all_report_request_ids) > 0 else '0'
+
+        report = Report(report_request_id=report_request_id, ven_id=self.ven_id, report_status='active')
+        report.save()
+        reportSpecifier = self.build_report_specifier()
+
+        return [oadr_20b.oadrReportRequestType(reportRequestID=report_request_id,
+                                               reportSpecifier=reportSpecifier)]
+
+    def build_report_specifier(self):
+
+        report_specifier_id = self.report_specifier_id
+        time = pytz.UTC.localize(datetime.utcnow())
+        dtstart = oadr_20b.dtstart(date_time=time)
+
+        # report duration == None is a signal to the Kisensum VEN (outside of the normal OADR protocol)
+        # to indicate that this report should continue indefinitely, i.e., until superseded by another report request.
+
+        properties = oadr_20b.properties(dtstart=dtstart, duration=None)
+        report_interval = oadr_20b.WsCalendarIntervalType(properties=properties)
+
+        return oadr_20b.ReportSpecifierType(reportSpecifierID=report_specifier_id,
+                                            reportInterval=report_interval,
+                                            granularity=self.build_report_back_duration(self),
+                                            reportBackDuration=self.build_report_back_duration(self),
+                                            specifierPayload=self.build_specifier_payload(self))
+
+    @staticmethod
+    def build_report_back_duration(self):
+        duration = isoduration.Duration(minutes=1)
+        iso_duration = isoduration.duration_isoformat(duration)  # duration in iso format
+        duration = oadr_20b.DurationPropType(duration=iso_duration)
+        return duration
+
+    @staticmethod
+    def build_specifier_payload(self):
+        xml = oadr_20b.SpecifierPayloadType(rID="real_power", readingType="x-notApplicable") # maybe readingType is primitive
+        return xml
+
+class OADRCreatedPartyRegistrationBuilder(PayloadXML):
+    """
+    This class builds a oadrCreatedPartyRegistration instance to convert to XML and pass back to the VEN.
+    An instance of this class is created after the VTN receives an oadrQueryRegistration.
+    """
+
+    def __init__(self, requestID, venID):
+        super(self.__class__, self).__init__('oadrCreatedPartyRegistration')
+        self.requestID = requestID
+        self.venID = venID
+
+    def build(self):
+        
+        duration = isoduration.Duration(seconds=15)
+        iso_duration = isoduration.duration_isoformat(duration)  # duration in iso format
+        duration = oadr_20b.DurationPropType(duration=iso_duration)
+        oadrTransport = oadr_20b.oadrTransportType2(oadrTransportName="simpleHttp")
+        oadrTransports = oadr_20b.oadrTransports(oadrTransport=oadrTransport)
+        oadrProfile = oadr_20b.oadrProfileType1(oadrProfileName='2.0b', oadrTransports=oadrTransports)
+        oadrProfiles = oadr_20b.oadrProfiles(oadrProfile=oadrProfile)
+        xml = oadr_20b.oadrCreatedPartyRegistrationType(schemaVersion=SCHEMA_VERSION,
+                                                 eiResponse=build_ei_response(status=STATUS_OK,
+                                                                              response_description='OK',
+                                                                              request_id=self.requestID),
+                                                 vtnID=settings.VTN_ID,
+                                                 venID=self.venID,
+                                                 oadrRequestedOadrPollFreq=duration,
+                                                 oadrProfiles=oadrProfiles)
+        return xml
+
+class OADRCreatePartyRegistrationBuilder(PayloadXML):
+    """
+    This class builds a oadrCreatePartyRegistration instance to convert to XML and pass back to the VEN.
+    An instance of this class is created after the VTN receives an oadrQueryRegistration.
+    """
+
+    def __init__(self, requestID, venID, oadrProfileName, oadrTransportName, oadrReportOnly, oadrXmlSignature, oadrVenName, oadrHttpPullModel):
+        super(self.__class__, self).__init__('oadrCreatePartyRegistration')
+        self.requestID = requestID
+        self.venID = venID
+        self.oadrProfileName = oadrProfileName
+        self.oadrTransportName = oadrTransportName
+        #self.oadrTransportAddress = oadrTransportAddress
+        self.oadrReportOnly = oadrReportOnly
+        self.oadrXmlSignature = oadrXmlSignature
+        self.oadrVenName = oadrVenName
+        self.oadrHttpPullModel = oadrHttpPullModel
+
+    def build(self):
+        
+        xml = oadr_20b.oadrCreatePartyRegistrationType(schemaVersion=SCHEMA_VERSION,
+                                                 requestID=self.requestID,
+                                                 venID=self.venID,
+                                                 oadrProfileName=self.oadrProfileName,
+                                                 oadrTransportName=self.oadrTransportName,
+                                                 oadrReportOnly=self.oadrReportOnly,
+                                                 oadrXmlSignature=self.oadrXmlSignature,
+                                                 oadrVenName=self.oadrVenName,
+                                                 oadrHttpPullModel=self.oadrHttpPullModel)
+        return xml
 
     def build_oadr_report_request(self):
 
@@ -286,4 +392,54 @@ class OADRRegisteredReportBuilder(PayloadXML):
     def build_specifier_payload(self):
         return oadr_20b.SpecifierPayloadType(rID=None, readingType=None) # maybe readingType is primitive
 
+class OADRReportRequestBuilder(PayloadXML):
+    """
+    This class builds a oadrReportRequest instance to convert to XML and pass back to the VEN.
+    An instance of this class is created after the VTN receives an oadrRegisterReport.
+    """
 
+    def __init__(self, reportRequestID, reportSpecifier):
+        super(self.__class__, self).__init__('oadrReportRequest')
+        self.reportRequestID = reportRequestID
+        self.reportSpecifier = reportSpecifier
+
+    def build(self):
+
+        return oadr_20b.oadrReportRequestType(
+                                                 reportRequestID=self.reportRequestID,
+                                                 reportSpecifier=self.reportSpecifier)
+
+    def build_oadr_report_request(self):
+
+        all_report_request_ids = [int(r.report_request_id) for r in Report.objects.all()]
+        all_report_request_ids.sort()
+        report_request_id = str(all_report_request_ids[-1] + 1) if len(all_report_request_ids) > 0 else '0'
+
+        report = Report(report_request_id=report_request_id, ven_id=self.ven_id, report_status='active')
+        report.save()
+
+        return [oadr_20b.oadrReportRequestType(reportRequestID=report_request_id,
+                                               reportSpecifier=self.build_report_specifier())]
+
+    def build_report_specifier(self):
+
+        report_specifier_id = self.report_specifier_id
+        time = pytz.UTC.localize(datetime.utcnow())
+        dtstart = oadr_20b.dtstart(date_time=time)
+
+        # report duration == None is a signal to the Kisensum VEN (outside of the normal OADR protocol)
+        # to indicate that this report should continue indefinitely, i.e., until superseded by another report request.
+
+        properties = oadr_20b.properties(dtstart=dtstart, duration=None)
+        report_interval = oadr_20b.WsCalendarIntervalType(properties=properties)
+
+        return oadr_20b.ReportSpecifierType(reportSpecifierID=report_specifier_id,
+                                            reportInterval=report_interval)
+
+    @staticmethod
+    def build_report_back_duration(self):
+        return 0
+
+    @staticmethod
+    def build_specifier_payload(self):
+        return oadr_20b.SpecifierPayloadType(rID=None, readingType=None) # maybe readingType is primitive

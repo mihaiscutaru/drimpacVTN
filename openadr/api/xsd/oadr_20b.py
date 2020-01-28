@@ -791,7 +791,7 @@ class oadrPayload(GeneratedsSuper):
 class oadrSignedObject(GeneratedsSuper):
     subclass = None
     superclass = None
-    def __init__(self, Id=None, oadrDistributeEvent=None, oadrCreatedEvent=None, oadrRequestEvent=None, oadrResponse=None, oadrCancelOpt=None, oadrCanceledOpt=None, oadrCreateOpt=None, oadrCreatedOpt=None, oadrCancelReport=None, oadrCanceledReport=None, oadrCreateReport=None, oadrCreatedReport=None, oadrRegisterReport=None, oadrRegisteredReport=None, oadrUpdateReport=None, oadrUpdatedReport=None, oadrCancelPartyRegistration=None, oadrCanceledPartyRegistration=None, oadrCreatePartyRegistration=None, oadrCreatedPartyRegistration=None, oadrRequestReregistration=None, oadrQueryRegistration=None, oadrPoll=None):
+    def __init__(self, Id=None, oadrDistributeEvent=None, oadrCreatedEvent=None, oadrRequestEvent=None, oadrResponse=None, oadrCancelOpt=None, oadrCanceledOpt=None, oadrCreateOpt=None, oadrCreatedOpt=None, oadrCancelReport=None, oadrCanceledReport=None, oadrCreateReport=None, oadrCreatedReport=None, oadrRegisterReport=None, oadrRegisteredReport=None, oadrUpdateReport=None, oadrUpdatedReport=None, oadrCancelPartyRegistration=None, oadrCanceledPartyRegistration=None, oadrCreatePartyRegistration=None, oadrCreatedPartyRegistration=None, oadrRequestReregistration=None, oadrQueryRegistration=None, oadrPoll=None, oadrReportRequest=None):
         self.original_tagname_ = None
         self.Id = _cast(None, Id)
         self.oadrDistributeEvent = oadrDistributeEvent
@@ -817,6 +817,7 @@ class oadrSignedObject(GeneratedsSuper):
         self.oadrRequestReregistration = oadrRequestReregistration
         self.oadrQueryRegistration = oadrQueryRegistration
         self.oadrPoll = oadrPoll
+        self.oadrReportRequest = oadrReportRequest
     def factory(*args_, **kwargs_):
         if CurrentSubclassModule_ is not None:
             subclass = getSubclassFromModule_(
@@ -874,6 +875,8 @@ class oadrSignedObject(GeneratedsSuper):
     def set_oadrQueryRegistration(self, oadrQueryRegistration): self.oadrQueryRegistration = oadrQueryRegistration
     def get_oadrPoll(self): return self.oadrPoll
     def set_oadrPoll(self, oadrPoll): self.oadrPoll = oadrPoll
+    def get_oadrReportRequest(self): return self.oadrReportRequest
+    def set_oadrReportRequest(self, oadrReportRequest): self.oadrReportRequest = oadrReportRequest
     def get_Id(self): return self.Id
     def set_Id(self, Id): self.Id = Id
     def hasContent_(self):
@@ -900,7 +903,8 @@ class oadrSignedObject(GeneratedsSuper):
             self.oadrCreatedPartyRegistration is not None or
             self.oadrRequestReregistration is not None or
             self.oadrQueryRegistration is not None or
-            self.oadrPoll is not None
+            self.oadrPoll is not None or
+            self.oadrReportRequest is not None
         ):
             return True
         else:
@@ -981,6 +985,8 @@ class oadrSignedObject(GeneratedsSuper):
             self.oadrQueryRegistration.export(outfile, level, namespace_='oadr:', name_='oadrQueryRegistration', pretty_print=pretty_print)
         if self.oadrPoll is not None:
             self.oadrPoll.export(outfile, level, namespace_='oadr:', name_='oadrPoll', pretty_print=pretty_print)
+        if self.oadrReportRequest is not None:
+            self.oadrReportRequest.export(outfile, level, namespace_='oadr:', name_='oadrReportRequest', pretty_print=pretty_print)
     def build(self, node):
         already_processed = set()
         self.buildAttributes(node, node.attrib, already_processed)
@@ -1109,6 +1115,11 @@ class oadrSignedObject(GeneratedsSuper):
             obj_.build(child_)
             self.oadrPoll = obj_
             obj_.original_tagname_ = 'oadrPoll'
+        elif nodeName_ == 'oadrReportRequest':
+            obj_ = oadrPollType.factory()
+            obj_.build(child_)
+            self.oadrReportRequest = obj_
+            obj_.original_tagname_ = 'oadrReportRequest'
 # end class oadrSignedObject
 
 
@@ -3178,7 +3189,7 @@ class oadrCreatedPartyRegistrationType(GeneratedsSuper):
             self.registrationID.export(outfile, level, namespace_='ei:', name_='registrationID', pretty_print=pretty_print)
         if self.venID is not None:
             showIndent(outfile, level, pretty_print)
-            outfile.write('<%svenID>%s</%svenID>%s' % (namespace_, self.gds_encode(self.gds_format_string(quote_xml(self.venID), input_name='venID')), namespace_, eol_))
+            outfile.write('<%svenID>%s</%svenID>%s' % ('ei:', self.gds_encode(self.gds_format_string(quote_xml(self.venID), input_name='venID')), 'ei:', eol_))
         if self.vtnID is not None:
             showIndent(outfile, level, pretty_print)
             outfile.write('<%svtnID>%s</%svtnID>%s' % ('ei:', self.gds_encode(self.gds_format_string(quote_xml(self.vtnID), input_name='vtnID')), 'ei:', eol_))
@@ -3499,7 +3510,8 @@ class oadrProfiles(GeneratedsSuper):
         if oadrProfile is None:
             self.oadrProfile = []
         else:
-            self.oadrProfile = oadrProfile
+            self.oadrProfile = []
+            self.oadrProfile.append(oadrProfile)
     def factory(*args_, **kwargs_):
         if CurrentSubclassModule_ is not None:
             subclass = getSubclassFromModule_(
@@ -3580,7 +3592,8 @@ class oadrTransports(GeneratedsSuper):
         if oadrTransport is None:
             self.oadrTransport = []
         else:
-            self.oadrTransport = oadrTransport
+            self.oadrTransport = []
+            self.oadrTransport.append(oadrTransport)
     def factory(*args_, **kwargs_):
         if CurrentSubclassModule_ is not None:
             subclass = getSubclassFromModule_(
@@ -4923,7 +4936,7 @@ class DurationPropType(GeneratedsSuper):
             return True
         else:
             return False
-    def export(self, outfile, level, namespace_='oadr:', name_='DurationPropType', namespacedef_='xmlns:oadr="http://openadr.org/oadr-2.0b/2012/07" xmlns:xcal="urn:ietf:params:xml:ns:icalendar-2.0" ', pretty_print=True):
+    def export(self, outfile, level, namespace_='xcal:', name_='DurationPropType', namespacedef_='xmlns:oadr="http://openadr.org/oadr-2.0b/2012/07" xmlns:xcal="urn:ietf:params:xml:ns:icalendar-2.0" ', pretty_print=True):
         imported_ns_def_ = GenerateDSNamespaceDefs_.get('DurationPropType')
         if imported_ns_def_ is not None:
             namespacedef_ = imported_ns_def_
@@ -4939,14 +4952,14 @@ class DurationPropType(GeneratedsSuper):
         self.exportAttributes(outfile, level, already_processed, namespace_, name_='DurationPropType')
         if self.hasContent_():
             outfile.write('>%s' % (eol_, ))
-            self.exportChildren(outfile, level + 1, namespace_='oadr:', name_='DurationPropType', pretty_print=pretty_print)
+            self.exportChildren(outfile, level + 1, namespace_='xcal:', name_='DurationPropType', pretty_print=pretty_print)
             showIndent(outfile, level, pretty_print)
             outfile.write('</%s%s>%s' % (namespace_, name_, eol_))
         else:
             outfile.write('/>%s' % (eol_, ))
-    def exportAttributes(self, outfile, level, already_processed, namespace_='oadr:', name_='DurationPropType'):
+    def exportAttributes(self, outfile, level, already_processed, namespace_='xcal:', name_='DurationPropType'):
         pass
-    def exportChildren(self, outfile, level, namespace_='oadr:', name_='DurationPropType', fromsubclass_=False, pretty_print=True):
+    def exportChildren(self, outfile, level, namespace_='xcal:', name_='DurationPropType', fromsubclass_=False, pretty_print=True):
         if pretty_print:
             eol_ = '\n'
         else:
@@ -8138,7 +8151,8 @@ class ReportSpecifierType(GeneratedsSuper):
         if specifierPayload is None:
             self.specifierPayload = []
         else:
-            self.specifierPayload = specifierPayload
+            self.specifierPayload = []
+            self.specifierPayload.append(specifierPayload)
     def factory(*args_, **kwargs_):
         if CurrentSubclassModule_ is not None:
             subclass = getSubclassFromModule_(
@@ -8208,7 +8222,7 @@ class ReportSpecifierType(GeneratedsSuper):
         if self.granularity is not None:
             self.granularity.export(outfile, level, namespace_='xcal:', name_='granularity', pretty_print=pretty_print)
         if self.reportBackDuration is not None:
-            self.reportBackDuration.export(outfile, level, namespace_, name_='reportBackDuration', pretty_print=pretty_print)
+            self.reportBackDuration.export(outfile, level, namespace_='ei:', name_='reportBackDuration', pretty_print=pretty_print)
         if self.reportInterval is not None:
             self.reportInterval.export(outfile, level, namespace_, name_='reportInterval', pretty_print=pretty_print)
         for specifierPayload_ in self.specifierPayload:

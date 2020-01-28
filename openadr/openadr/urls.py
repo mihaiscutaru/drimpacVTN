@@ -85,6 +85,6 @@ urlpatterns = [
     url(r'^OpenADR2/Simple/2.0b/OadrPoll$', views.OADRPoll.as_view(), name='oadr-poll'),
     url(r'^OpenADR2/Simple/2.0b/EiEvent$', views.EIEvent.as_view(), name='ei-event'),
     url(r'^OpenADR2/Simple/2.0b/EiReport$', views.EIReport.as_view(), name='report'),
-    # url(r'^OpenADR2/Simple/2.0b/EiRegisterParty', views.EIRegisterParty.as_view(), name='register-party'),
+    url(r'^OpenADR2/Simple/2.0b/EiRegisterParty$', views.EIRegisterParty.as_view(), name='register-party'),
     url(r'^api-auth/', include('rest_framework.urls', namespace='rest_framework')),
 ]
