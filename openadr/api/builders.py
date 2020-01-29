@@ -79,6 +79,7 @@ from django.db.models import ObjectDoesNotExist
 from api.static_methods import *
 import pytz
 from django.conf import settings
+import uuid
 
 SCHEMA_VERSION = '2.0b'
 BOGUS_REQUEST_ID = 300
@@ -229,7 +230,8 @@ class OADRDistributeEventBuilder(PayloadXML):
         dtstart = oadr_20b.dtstart(date_time=event_start)
         properties = oadr_20b.properties(dtstart=dtstart, duration=duration)
         report_interval = [oadr_20b.WsCalendarIntervalType(properties=properties)]
-        interval = [oadr_20b.IntervalType(dtstart=dtstart, duration=duration)]
+        
+        interval = [oadr_20b.IntervalType(dtstart=dtstart, duration=duration, uid=uuid.uuid4() )]
         intervals = oadr_20b.intervals(interval=interval)
         
         valuePayload = oadr_20b.PayloadFloatType(value = 3.14)

@@ -5812,7 +5812,7 @@ class IntervalType(GeneratedsSuper):
             self.duration.export(outfile, level, namespace_='xcal:', name_='duration', pretty_print=pretty_print)
         if self.uid is not None:
             showIndent(outfile, level, pretty_print)
-            outfile.write('<%suid>%s</%suid>%s' % (namespace_, self.gds_encode(self.gds_format_string(quote_xml(self.uid), input_name='uid')), namespace_, eol_))
+            outfile.write('<%suid>%s</%suid>%s' % ("xcal:", self.gds_encode(self.gds_format_string(quote_xml(self.uid), input_name='uid')), "xcal:", eol_))
         for streamPayloadBase_ in self.streamPayloadBase:
             streamPayloadBase_.export(outfile, level, namespace_, name_='streamPayloadBase', pretty_print=pretty_print)
     def build(self, node):
