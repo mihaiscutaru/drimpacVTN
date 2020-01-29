@@ -171,6 +171,8 @@ class OADRDistributeEventBuilder(PayloadXML):
             event_status = 'cancelled'
         else:
             event_status = site_event.dr_event.status
+            
+        marketContext = oadr_20b.eiMarketContextType("testMarketContext")
 
         return oadr_20b.eventDescriptorType(eventID=event_id,
                                             modificationNumber=modification_number,
@@ -179,7 +181,8 @@ class OADRDistributeEventBuilder(PayloadXML):
                                             createdDateTime=created_date_time,
                                             eventStatus=event_status,
                                             testEvent=test_event,
-                                            vtnComment=vtn_comment)
+                                            vtnComment=vtn_comment,
+                                            eiMarketContext= marketContext)
 
     def build_active_period(self, site_event):
         return oadr_20b.eiActivePeriodType(properties=self.build_active_period_properties(site_event),

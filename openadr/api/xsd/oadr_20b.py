@@ -5054,7 +5054,7 @@ class dtstart(GeneratedsSuper):
             eol_ = ''
         if self.date_time is not None:
             showIndent(outfile, level, pretty_print)
-            outfile.write('<%sdate-time>%s</%sdate-time>%s' % (namespace_, self.gds_format_datetime(self.date_time, input_name='date-time'), namespace_, eol_))
+            outfile.write('<%sdate-time>%s</%sdate-time>%s' % ('xcal:', self.gds_format_datetime(self.date_time, input_name='date-time'), 'xcal:', eol_))
     def build(self, node):
         already_processed = set()
         self.buildAttributes(node, node.attrib, already_processed)
@@ -6680,7 +6680,7 @@ class eventDescriptorType(GeneratedsSuper):
             outfile.write('<%smodificationNumber>%s</%smodificationNumber>%s' % (namespace_, self.gds_format_integer(self.modificationNumber, input_name='modificationNumber'), namespace_, eol_))
         if self.modificationDateTime is not None:
             showIndent(outfile, level, pretty_print)
-            outfile.write('<%smodificationDateTime>%s</%smodificationDateTime>%s' % (namespace_, self.gds_format_datetime(self.modificationDateTime, input_name='modificationDateTime'), namespace_, eol_))
+            outfile.write('<%smodificationDateTime>%s</%smodificationDateTime>%s' % ('ei:', self.gds_format_datetime(self.modificationDateTime, input_name='modificationDateTime'), 'ei:', eol_))
         if self.modificationReason is not None:
             showIndent(outfile, level, pretty_print)
             outfile.write('<%smodificationReason>%s</%smodificationReason>%s' % (namespace_, self.gds_encode(self.gds_format_string(quote_xml(self.modificationReason), input_name='modificationReason')), namespace_, eol_))
@@ -6688,10 +6688,10 @@ class eventDescriptorType(GeneratedsSuper):
             showIndent(outfile, level, pretty_print)
             outfile.write('<%spriority>%s</%spriority>%s' % (namespace_, self.gds_format_integer(self.priority, input_name='priority'), namespace_, eol_))
         if self.eiMarketContext is not None:
-            self.eiMarketContext.export(outfile, level, namespace_, name_='eiMarketContext', pretty_print=pretty_print)
+            self.eiMarketContext.export(outfile, level, 'ei:', name_='eiMarketContext', pretty_print=pretty_print)
         if self.createdDateTime is not None:
             showIndent(outfile, level, pretty_print)
-            outfile.write('<%screatedDateTime>%s</%screatedDateTime>%s' % (namespace_, self.gds_format_datetime(self.createdDateTime, input_name='createdDateTime'), namespace_, eol_))
+            outfile.write('<%screatedDateTime>%s</%screatedDateTime>%s' % ('ei:', self.gds_format_datetime(self.createdDateTime, input_name='createdDateTime'), 'ei:', eol_))
         if self.eventStatus is not None:
             showIndent(outfile, level, pretty_print)
             outfile.write('<%seventStatus>%s</%seventStatus>%s' % ('ei:', self.gds_encode(self.gds_format_string(quote_xml(self.eventStatus), input_name='eventStatus')), 'ei:', eol_))
@@ -17920,7 +17920,7 @@ class eiMarketContextType(GeneratedsSuper):
             return True
         else:
             return False
-    def export(self, outfile, level, namespace_='oadr:', name_='eiMarketContextType', namespacedef_='xmlns:oadr="http://openadr.org/oadr-2.0b/2012/07" xmlns:emix="http://docs.oasis-open.org/ns/emix/2011/06" ', pretty_print=True):
+    def export(self, outfile, level, namespace_='ei:', name_='eiMarketContextType', namespacedef_='xmlns:oadr="http://openadr.org/oadr-2.0b/2012/07" xmlns:emix="http://docs.oasis-open.org/ns/emix/2011/06" ', pretty_print=True):
         imported_ns_def_ = GenerateDSNamespaceDefs_.get('eiMarketContextType')
         if imported_ns_def_ is not None:
             namespacedef_ = imported_ns_def_
@@ -17936,14 +17936,14 @@ class eiMarketContextType(GeneratedsSuper):
         self.exportAttributes(outfile, level, already_processed, namespace_, name_='eiMarketContextType')
         if self.hasContent_():
             outfile.write('>%s' % (eol_, ))
-            self.exportChildren(outfile, level + 1, namespace_='oadr:', name_='eiMarketContextType', pretty_print=pretty_print)
+            self.exportChildren(outfile, level + 1, namespace_='ei:', name_='eiMarketContextType', pretty_print=pretty_print)
             showIndent(outfile, level, pretty_print)
             outfile.write('</%s%s>%s' % (namespace_, name_, eol_))
         else:
             outfile.write('/>%s' % (eol_, ))
-    def exportAttributes(self, outfile, level, already_processed, namespace_='oadr:', name_='eiMarketContextType'):
+    def exportAttributes(self, outfile, level, already_processed, namespace_='ei:', name_='eiMarketContextType'):
         pass
-    def exportChildren(self, outfile, level, namespace_='oadr:', name_='eiMarketContextType', fromsubclass_=False, pretty_print=True):
+    def exportChildren(self, outfile, level, namespace_='ei:', name_='eiMarketContextType', fromsubclass_=False, pretty_print=True):
         if pretty_print:
             eol_ = '\n'
         else:
