@@ -172,7 +172,7 @@ class OADRDistributeEventBuilder(PayloadXML):
         else:
             event_status = site_event.dr_event.status
             
-        marketContext = oadr_20b.eiMarketContextType("testMarketContext")
+        marketContext = oadr_20b.eiMarketContextType("http://MarketContext1")
 
         return oadr_20b.eventDescriptorType(eventID=event_id,
                                             modificationNumber=modification_number,
@@ -231,8 +231,11 @@ class OADRDistributeEventBuilder(PayloadXML):
         report_interval = [oadr_20b.WsCalendarIntervalType(properties=properties)]
         interval = [oadr_20b.IntervalType(dtstart=dtstart, duration=duration)]
         intervals = oadr_20b.intervals(interval=interval)
+        
+        valuePayload = oadr_20b.PayloadFloatType(value = 3.14)
+        eventValue = oadr_20b.currentValueType(payloadFloat = valuePayload)
         return [oadr_20b.eiEventSignalType(intervals=intervals, signalName='simple',
-                                           signalType='level')]
+                                           signalType='level', currentValue= eventValue)]
 
 
 class OADRRegisteredReportBuilder(PayloadXML):

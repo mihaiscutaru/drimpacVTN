@@ -6092,7 +6092,7 @@ class PayloadFloatType(PayloadBaseType):
             eol_ = ''
         if self.value is not None:
             showIndent(outfile, level, pretty_print)
-            outfile.write('<%svalue>%s</%svalue>%s' % (namespace_, self.gds_format_float(self.value, input_name='value'), namespace_, eol_))
+            outfile.write('<%svalue>%s</%svalue>%s' % ("ei:", self.gds_format_float(self.value, input_name='value'), "ei:", eol_))
     def build(self, node):
         already_processed = set()
         self.buildAttributes(node, node.attrib, already_processed)
