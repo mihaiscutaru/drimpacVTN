@@ -23,6 +23,32 @@
          Example Run:
          
          curl -X POST -d '{"type":"program","name":"Program2","sites":"Site1,ven02"}' --header "Content-Type: application/json"  http://127.0.0.1:8000/vtn_data_config
+      
+      In case of a "customer" type:
+         "name": 
+         "utility_id": 
+         "contact_name":
+         "phone_number":
+         
+         Example Run:
+         
+         curl -X POST -d '{"type":"customer","name":"CustomerX","utility_id":"001","contact_name":"CustomerX","phone_number":"0123456789"}' --header "Content-Type: application/json"  http://127.0.0.1:8000/vtn_data_config
+      
+      In case of a "ven" type:
+         "customer": The Customer name as string value
+         "site_name": The Site Name
+         "ven_name": The VEN Name
+         "site_location_code": The site location code
+         "site_address1": The Site's Address
+         "city": The city corresponding to the Site
+         "state": The state corresponding to the Site
+         "zip": The zip code corresponding to the Site
+         "contact_name": A contact name
+         "phone_number": Phone Number
+         
+         Example Run:
+      
+         curl -X POST -d '{"type": "ven", "customer": "CustomerX","site_name": "ven055","ven_name": "ven055","site_address1": "TestAddress","city": "Thess","state": "GR","zip": "22122","contact_name": "CustomerX","phone_number": "0123456789"}' --header "Content-Type: application/json"  http://127.0.0.1:8000/vtn_data_config
 """
 
 import django
@@ -47,22 +73,32 @@ class VtnDataConfig(APIView):
    
    parser_classes = (JSONParser,)
    
+   def get_status(self,message):
+      if "ERROR" in message:
+         return str(status.HTTP_400_BAD_REQUEST)
+      else:
+         return str(status.HTTP_200_OK)
+   
    @csrf_exempt
    def post(self, request, format=None):
       req = json.dumps(request.data)
       req = json.loads(req)
       if req['type'] == 'event':
          response = self.create_event(req['drprogram'], req['event_start'], req['event_end'], req['event_notification'])
-         if "ERROR" in response:
-            return Response(response, content_type='application/json', status=status.HTTP_400_BAD_REQUEST)
-         else:
-            return Response(response, content_type='application/json', status=status.HTTP_200_OK)
+         self.get_status(response)
+         return Response(response, content_type='application/json', status=status)
       elif req['type'] == 'program':
          response = self.create_program(req['name'], req['sites'])
-         if "ERROR" in response:
-            return Response(response, content_type='application/json', status=status.HTTP_400_BAD_REQUEST)
-         else:
-            return Response(response, content_type='application/json', status=status.HTTP_200_OK)
+         self.get_status(response)
+         return Response(response, content_type='application/json', status=status)
+      elif req['type'] == 'customer':
+         response = self.create_customer(req['name'], req['utility_id'],req['contact_name'],req['phone_number'])
+         status = self.get_status(response)
+         return Response(response, content_type='application/json', status=status)
+      elif req['type'] == 'ven':
+         response = self.create_ven(req['customer'],req['site_name'],req['ven_name'],req['site_location_code'],req['site_address1'],req['city'],req['state'],req['zip'],req['contact_name'],req['phone_number'])
+         status = self.get_status(response)
+         return Response(response, content_type='application/json', status=status)
 
    def create_event(self,drprogram,event_start,event_end,event_notification):
       try:
@@ -72,7 +108,6 @@ class VtnDataConfig(APIView):
          return '{"status": "ERROR: DR Program not found"}'
 
       sites_in_program = dr_program.sites.all()
-      site = sites_in_program[random.randint(0, len(sites_in_program) - 1)]
       events = DREvent.objects.all().order_by('-event_id')
       try:
          event_id = events[0].event_id + 1
@@ -119,6 +154,44 @@ class VtnDataConfig(APIView):
          program.save()
          for site in finalSiteList:
             program.sites.add(site)
+         return '{"status": "OK"}'
+      except Exception as e:
+         return '{"status": "ERROR: %s}' % e
+   
+   def create_customer(self,name,utility_id,contact_name,phone_number):
+      try:
+         customer = Customer(name=name,utility_id=utility_id,contact_name=contact_name,phone_number=phone_number)
+         customer.save()
+         return '{"status": "OK"}'
+      except Exception as e:
+         return '{"status": "ERROR: %s}' % e
+   
+   def create_ven(self,customer,site_name,ven_name,site_location_code,site_address1,city,state,zip,contact_name,phone_number):
+      try:
+         try:
+            query = Customer.objects.filter(Q(name=customer))
+            customer = query[0]
+         except IndexError:
+            return '{"status": "ERROR: Customer not found"}'
+         sites = Site.objects.all().order_by('-ven_id')
+         try:
+            site_id = int(sites[0].ven_id) + 1
+         except IndexError:
+            site_id = 0
+         s = Site(customer=customer,
+                  site_name=site_name,
+                  site_id=site_id,
+                  ven_id=site_id,
+                  ven_name=ven_name,
+                  site_location_code=site_location_code,
+                  site_address1=site_address1,
+                  city=city,
+                  state=state,
+                  zip=zip,
+                  contact_name=contact_name,
+                  phone_number=phone_number,
+                  online=False)
+         s.save()
          return '{"status": "OK"}'
       except Exception as e:
          return '{"status": "ERROR: %s}' % e
