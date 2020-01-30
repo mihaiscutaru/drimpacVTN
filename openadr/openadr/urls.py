@@ -73,7 +73,7 @@ Including another URLconf
 from django.conf.urls import url, include
 from django.contrib import admin
 from django.conf import settings
-from api import views
+from api import views, vtn_data_config
 from django.contrib.auth import views as auth_views
 
 urlpatterns = [
@@ -86,5 +86,6 @@ urlpatterns = [
     url(r'^OpenADR2/Simple/2.0b/EiEvent$', views.EIEvent.as_view(), name='ei-event'),
     url(r'^OpenADR2/Simple/2.0b/EiReport$', views.EIReport.as_view(), name='report'),
     url(r'^OpenADR2/Simple/2.0b/EiRegisterParty$', views.EIRegisterParty.as_view(), name='register-party'),
+    url(r'^vtn_data_config$', vtn_data_config.VtnDataConfig.as_view(), name='vtn_data_config'),
     url(r'^api-auth/', include('rest_framework.urls', namespace='rest_framework')),
 ]
