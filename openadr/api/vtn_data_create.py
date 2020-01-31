@@ -1,5 +1,5 @@
 """
-   vtn_data_config.py
+   vtn_data_create.py
    
    Script to initiliaze a DR events / DR Programs / Customers / VENs from a REST API endpoint
    
@@ -14,7 +14,7 @@
 
          Example Run:
 
-         curl -X POST -d '{"type":"event","drprogram":"Program1","event_start":"2020-01-30T02:15:42","event_end":"2020-01-30T02:16:52","event_notification":"2020-01-30T02:14"}' --header "Content-Type: application/json"  http://127.0.0.1:8000/vtn_data_config
+         curl -X POST -d '{"type":"event","drprogram":"Program1","event_start":"2020-01-30T02:15:42","event_end":"2020-01-30T02:16:52","event_notification":"2020-01-30T02:14"}' --header "Content-Type: application/json"  http://127.0.0.1:8000/vtn_data_create
 
       In case of a "program" type:
          "name": The DR Program name to be added
@@ -22,7 +22,7 @@
          
          Example Run:
          
-         curl -X POST -d '{"type":"program","name":"Program2","sites":"Site1,ven02"}' --header "Content-Type: application/json"  http://127.0.0.1:8000/vtn_data_config
+         curl -X POST -d '{"type":"program","name":"Program2","sites":"Site1,ven02"}' --header "Content-Type: application/json"  http://127.0.0.1:8000/vtn_data_create
       
       In case of a "customer" type:
          "name": 
@@ -32,7 +32,7 @@
          
          Example Run:
          
-         curl -X POST -d '{"type":"customer","name":"CustomerX","utility_id":"001","contact_name":"CustomerX","phone_number":"0123456789"}' --header "Content-Type: application/json"  http://127.0.0.1:8000/vtn_data_config
+         curl -X POST -d '{"type":"customer","name":"CustomerX","utility_id":"001","contact_name":"CustomerX","phone_number":"0123456789"}' --header "Content-Type: application/json"  http://127.0.0.1:8000/vtn_data_create
       
       In case of a "ven" type:
          "customer": The Customer name as string value
@@ -48,7 +48,7 @@
          
          Example Run:
       
-         curl -X POST -d '{"type": "ven", "customer": "CustomerX","site_name": "ven055","ven_name": "ven055","site_address1": "TestAddress","city": "Thess","state": "GR","zip": "22122","contact_name": "CustomerX","phone_number": "0123456789"}' --header "Content-Type: application/json"  http://127.0.0.1:8000/vtn_data_config
+         curl -X POST -d '{"type": "ven", "customer": "CustomerX","site_name": "ven055","ven_name": "ven055","site_address1": "TestAddress","city": "Thess","state": "GR","zip": "22122","contact_name": "CustomerX","phone_number": "0123456789"}' --header "Content-Type: application/json"  http://127.0.0.1:8000/vtn_data_create
 """
 
 import django
@@ -59,6 +59,7 @@ from rest_framework.response import Response
 from rest_framework.views import APIView
 from django.views.decorators.csrf import csrf_exempt
 from rest_framework.parsers import JSONParser
+from rest_framework.renderers import JSONRenderer
 from rest_framework import status
 os.chdir(os.environ['PROJECT_HOME'] + "/openadr")
 os.environ.setdefault("DJANGO_SETTINGS_MODULE", "openadr.settings.base")
@@ -69,9 +70,10 @@ from datetime import datetime, timedelta
 from vtn.models import *
 from django.db.models import Q
 
-class VtnDataConfig(APIView):
+class VtnDataCreate(APIView):
    
    parser_classes = (JSONParser,)
+   renderer_classes = (JSONRenderer,)
    
    def get_status(self,message):
       if "ERROR" in message:
