@@ -73,7 +73,7 @@ Including another URLconf
 from django.conf.urls import url, include
 from django.contrib import admin
 from django.conf import settings
-from api import views, vtn_data_retrieve, vtn_data_create
+from api import views, vtn_data_retrieve, vtn_data_create, vtn_data_edit, vtn_data_delete
 from django.contrib.auth import views as auth_views
 
 urlpatterns = [
@@ -88,5 +88,7 @@ urlpatterns = [
     url(r'^OpenADR2/Simple/2.0b/EiRegisterParty$', views.EIRegisterParty.as_view(), name='register-party'),
     url(r'^vtn_data_create$', vtn_data_create.VtnDataCreate.as_view(), name='vtn_data_create'),
     url(r'^vtn_data_retrieve$', vtn_data_retrieve.VtnDataRetrieve.as_view(), name='vtn_data_retrieve'),
+    url(r'^vtn_data_edit$', vtn_data_edit.VtnDataEdit.as_view(), name='vtn_data_edit'),
+    url(r'^vtn_data_delete$', vtn_data_delete.VtnDataDelete.as_view(), name='vtn_data_delete'),
     url(r'^api-auth/', include('rest_framework.urls', namespace='rest_framework')),
 ]
