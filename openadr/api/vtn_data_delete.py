@@ -1,62 +1,39 @@
 """
-   vtn_data_retrieve.py
+   vtn_data_delete.py
    
-   Script to retrieve information regarding DR events / DR Programs / Customers / VENs from a REST API endpoint
+   Script to delete DR events / DR Programs / Customers / VENs from a REST API endpoint
    
    Args:
-      "type": The type can be one of the following [event|events|program|programs|customer|customers|ven|vens"
+      "type": The type can be one of the following [event|program|customer|ven]"
 
       In case of an "event" type:
-         "event": The Event ID to be retrieved
+         "event": The Event ID to be deleted
 
          Example Run:
 
-         curl -X POST -d '{"type":"event","event":"event_id"}' --header "Content-Type: application/json"  http://127.0.0.1:8000/vtn_data_retrieve
-
-      In case of an "events" type:
-
-         Example Run:
-
-         curl -X POST -d '{"type":"events"}' --header "Content-Type: application/json"  http://127.0.0.1:8000/vtn_data_retrieve
+         curl -X POST -d '{"type":"event","event":"23"}' --header "Content-Type: application/json"  http://127.0.0.1:8000/vtn_data_delete
          
       In case of a "program" type:
-         "program": The DR Program name to be retrieved
+         "program": The DR Program name to be deleted
          
          Example Run:
          
-         curl -X POST -d '{"type":"program","program":"program_name"}' --header "Content-Type: application/json"  http://127.0.0.1:8000/vtn_data_retrieve
-      
-      In case of a "programs" type:
-         
-         Example Run:
-         
-         curl -X POST -d '{"type":"programs"}' --header "Content-Type: application/json"  http://127.0.0.1:8000/vtn_data_retrieve
+         curl -X POST -d '{"type":"program","program":"drprogram0"}' --header "Content-Type: application/json"  http://127.0.0.1:8000/vtn_data_delete
          
       In case of a "customer" type:
-         "name": The Customer name to be retrieved
+         "customer": The Customer ID to be deleted
          
          Example Run:
          
-         curl -X POST -d '{"type":"customer","customer":"CustomerX"}' --header "Content-Type: application/json"  http://127.0.0.1:8000/vtn_data_retrieve
-      
-      In case of a "customers" type:
-         
-         Example Run:
-         
-         curl -X POST -d '{"type":"customers"}' --header "Content-Type: application/json"  http://127.0.0.1:8000/vtn_data_retrieve
+         curl -X POST -d '{"type":"customer","customer":"9"}' --header "Content-Type: application/json"  http://127.0.0.1:8000/vtn_data_delete
          
       In case of a "ven" type:
-         "ven_name": The VEN Name to be retrieved
+         "ven": The VEN ID to be deleted
          
          Example Run:
          
-         curl -X POST -d '{"type":"ven","ven":"ven_name"}' --header "Content-Type: application/json"  http://127.0.0.1:8000/vtn_data_retrieve
+         curl -X POST -d '{"type":"ven","ven":"3"}' --header "Content-Type: application/json"  http://127.0.0.1:8000/vtn_data_delete
          
-      In case of a "vens" type:
-         
-         Example Run:
-         
-         curl -X POST -d '{"type":"vens"}' --header "Content-Type: application/json"  http://127.0.0.1:8000/vtn_data_retrieve
 """
 
 import django
@@ -94,29 +71,27 @@ class VtnDataDelete(APIView):
       req = json.dumps(request.data)
       req = json.loads(req)
       if req['type'] == 'event':
-         response = self.get_event(req['event'])
+         response = self.delete_event(req['event'])
          status = self.get_status(response)
          return Response(response, content_type='application/json', status=status)
       elif req['type'] == 'program':
-         response = self.get_program(req['program'])
+         response = self.delete_program(req['program'])
          status = self.get_status(response)
          return Response(response, content_type='application/json', status=status)
       elif req['type'] == 'customer':
-         response = self.get_customer(req['customer'])
+         response = self.delete_customer(req['customer'])
          status = self.get_status(response)
          return Response(response, content_type='application/json', status=status)
       elif req['type'] == 'ven':
-         response = self.get_ven(req['ven'])
+         response = self.delete_ven(req['ven'])
          status = self.get_status(response)
          return Response(response, content_type='application/json', status=status)
 
    def delete_event(self, event):
       data = json.loads('{ "data": [],"status": "OK"}')
       try:
-         event = DREvent.objects.filter(Q(event_id=event))
-         data['data'].append(event.values_list().values()[0])
-         program = DRProgram.objects.filter(Q(id=data['data'][0]['dr_program_id']))
-         data['data'][0]['dr_program'] = program[0].name
+         event = DREvent.objects.filter(Q(event_id=event))[0]
+         event.delete()
          return data
       except Exception as e:
          data['status'] = '"ERROR: %s}' % e
@@ -125,9 +100,7 @@ class VtnDataDelete(APIView):
       data = json.loads('{ "data": [{"sites": []}],"status": "OK"}')
       try:
          program = DRProgram.objects.filter(Q(name=program))
-         for programIter in program[0].sites.values():
-            data['data'][0]['sites'].append(programIter)
-         data['data'].append(program.values_list().values()[0])
+         program.delete()
          return data
       except Exception as e:
          data['status'] = '"ERROR: %s}' % e
@@ -135,8 +108,8 @@ class VtnDataDelete(APIView):
    def delete_customer(self, customer):
       data = json.loads('{ "data": [],"status": "OK"}')
       try:
-         customer = Customer.objects.filter(Q(name=customer))
-         data['data'].append(customer.values_list().values()[0])
+         customer = Customer.objects.filter(Q(id=customer))
+         customer.delete()
          return data
       except Exception as e:
          data['status'] = '"ERROR: %s}' % e
@@ -144,10 +117,8 @@ class VtnDataDelete(APIView):
    def delete_ven(self, ven):
       data = json.loads('{ "data": [],"status": "OK"}')
       try:
-         site = Site.objects.filter(Q(ven_name=ven))
-         data['data'].append(site.values_list().values()[0])
-         customer = Customer.objects.filter(Q(id=data['data'][0]['customer_id']))
-         data['data'][0]['customer_name'] = customer[0].name
+         site = Site.objects.filter(Q(ven_id=ven))
+         site.delete()
          return data
       except Exception as e:
          data['status'] = '"ERROR: %s}' % e

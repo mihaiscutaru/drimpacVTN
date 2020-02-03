@@ -33,7 +33,7 @@
          curl -X POST -d '{"type":"programs"}' --header "Content-Type: application/json"  http://127.0.0.1:8000/vtn_data_retrieve
          
       In case of a "customer" type:
-         "name": The Customer name to be retrieved
+         "customer": The Customer name to be retrieved
          
          Example Run:
          

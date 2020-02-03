@@ -21,14 +21,14 @@
          curl -X POST -d '{"data":[{"sites":[{"id":1,"customer_id":1,"site_name":"Site1","site_id":"1","ven_id":"0","ven_name":"ven01","site_location_code":"54545","ip_address":"","site_address1":"Address1","site_address2":null,"city":"Thessaloniki","state":"GR","zip":"54545","contact_name":"Site1","phone_number":"6998492379","online":false,"last_status_time":"2020-01-29T07:03:17.666051Z"}]},{"id":6,"name":"Program2"}],"type":"program"}' --header "Content-Type: application/json"  http://127.0.0.1:8000/vtn_data_edit
          
       In case of a "customer" type:
-         "name": The Customer JSON structure to be modified
+         "customer": The Customer JSON structure to be modified
          
          Example Run:
          
          curl -X POST -d '{"type":"customer", "customer": [{"id":20,"name":"CustomerX","utility_id":"electoricity1","contact_name":"CustomerX","phone_number":"692342379"}]}' --header "Content-Type: application/json"  http://127.0.0.1:8000/vtn_data_edit
          
       In case of a "ven" type:
-         "ven_name": The VEN JSON structure to be modified
+         "ven": The VEN JSON structure to be modified
          
          Example Run:
          
