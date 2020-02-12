@@ -61,6 +61,7 @@ from __future__ import unicode_literals
 from django.db import models
 from django.core.urlresolvers import reverse, reverse_lazy
 from django.contrib.auth.models import User
+from django.contrib.postgres.fields import JSONField
 
 
 class Customer(models.Model):
@@ -132,6 +133,16 @@ class DREvent(models.Model):
         ('cancelled', 'cancelled'),
         ('unresponded', 'unresponded')
     )
+    
+    SIGNAL_NAME_CHOICES = (
+        ('LOAD_DISPATCH','LOAD_DISPATCH'),
+        ('ELECTRICITY_PRICE','ELECTRICITY_PRICE')
+    )
+    
+    SIGNAL_TYPE_CHOICES = (
+        ('setpoint','setpoint'),
+        ('price','price')
+    )
 
     dr_program = models.ForeignKey(DRProgram)
     scheduled_notification_time = models.DateTimeField('Scheduled Notification Time')
@@ -143,6 +154,10 @@ class DREvent(models.Model):
     last_status_time = models.DateTimeField('Last Status Time', blank=True, null=True)
     superseded = models.BooleanField('Superseded', default=False)
     event_id = models.IntegerField('Event ID')
+    intervals = JSONField()
+    signal_name = models.CharField('Signal Name', max_length=100, choices=SIGNAL_NAME_CHOICES, default='LOAD_DISPATCH')
+    signal_type = models.CharField('Signal Type', max_length=100, choices=SIGNAL_TYPE_CHOICES, default='setpoint')
+
     deleted = models.BooleanField(default=False)
 
     def __str__(self):

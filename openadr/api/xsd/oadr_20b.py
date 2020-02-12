@@ -5745,7 +5745,8 @@ class IntervalType(GeneratedsSuper):
         if streamPayloadBase is None:
             self.streamPayloadBase = []
         else:
-            self.streamPayloadBase = streamPayloadBase
+            self.streamPayloadBase = []
+            self.streamPayloadBase.append(streamPayloadBase)
     def factory(*args_, **kwargs_):
         if CurrentSubclassModule_ is not None:
             subclass = getSubclassFromModule_(
@@ -5812,9 +5813,16 @@ class IntervalType(GeneratedsSuper):
             self.duration.export(outfile, level, namespace_='xcal:', name_='duration', pretty_print=pretty_print)
         if self.uid is not None:
             showIndent(outfile, level, pretty_print)
-            outfile.write('<%suid>%s</%suid>%s' % ("xcal:", self.gds_encode(self.gds_format_string(quote_xml(self.uid), input_name='uid')), "xcal:", eol_))
+            outfile.write('<%suid %s>%s' % ('xcal:', 'xmlns:xcal="urn:ietf:params:xml:ns:icalendar-2.0"', eol_))
+            showIndent(outfile, level+1, pretty_print)
+            self.uid.export(outfile, level, namespace_='xcal:', name_='text ', pretty_print=pretty_print)
+            showIndent(outfile, level, pretty_print)
+            outfile.write('</%suid>%s' % ("xcal:", eol_))
         for streamPayloadBase_ in self.streamPayloadBase:
-            streamPayloadBase_.export(outfile, level, namespace_, name_='streamPayloadBase', pretty_print=pretty_print)
+            if type(streamPayloadBase_) == signalPayloadType:
+                streamPayloadBase_.export(outfile, level, namespace_, name_='signalPayload', pretty_print=pretty_print)
+            else:
+                streamPayloadBase_.export(outfile, level, namespace_, name_='streamPayloadBase', pretty_print=pretty_print)
     def build(self, node):
         already_processed = set()
         self.buildAttributes(node, node.attrib, already_processed)
@@ -5928,7 +5936,7 @@ class currentValueType(GeneratedsSuper):
         self.exportAttributes(outfile, level, already_processed, namespace_, name_='currentValueType')
         if self.hasContent_():
             outfile.write('>%s' % (eol_, ))
-            self.exportChildren(outfile, level + 1, namespace_='oadr:', name_='currentValueType', pretty_print=pretty_print)
+            self.exportChildren(outfile, level, namespace_='xcal:', name_='currentValueType', pretty_print=pretty_print)
             showIndent(outfile, level, pretty_print)
             outfile.write('</%s%s>%s' % (namespace_, name_, eol_))
         else:
@@ -6092,7 +6100,7 @@ class PayloadFloatType(PayloadBaseType):
             eol_ = ''
         if self.value is not None:
             showIndent(outfile, level, pretty_print)
-            outfile.write('<%svalue>%s</%svalue>%s' % ("ei:", self.gds_format_float(self.value, input_name='value'), "ei:", eol_))
+            outfile.write('<%svalue>%.3f</%svalue>%s' % ("ei:", self.value, "ei:", eol_))
     def build(self, node):
         already_processed = set()
         self.buildAttributes(node, node.attrib, already_processed)
@@ -6113,6 +6121,69 @@ class PayloadFloatType(PayloadBaseType):
             self.value = fval_
         super(PayloadFloatType, self).buildChildren(child_, node, nodeName_, True)
 # end class PayloadFloatType
+
+class Text(GeneratedsSuper):
+    """Simple Text attribute"""
+    subclass = None
+    superclass = None
+    def __init__(self, value=None):
+        self.original_tagname_ = None
+        self.value = value
+    def factory(*args_, **kwargs_):
+        if CurrentSubclassModule_ is not None:
+            subclass = getSubclassFromModule_(
+                CurrentSubclassModule_, Text)
+            if subclass is not None:
+                return subclass(*args_, **kwargs_)
+        if Text.subclass:
+            return Text.subclass(*args_, **kwargs_)
+        else:
+            return Text(*args_, **kwargs_)
+    factory = staticmethod(factory)
+    def get_value(self): return self.value
+    def set_value(self, value): self.value = value
+    def hasContent_(self):
+        if (
+            self.value is not None or
+            super(Text, self).hasContent_()
+        ):
+            return True
+        else:
+            return False
+    def export(self, outfile, level, namespace_='xcal:', name_='text ', namespacedef_='xmlns:xcal="urn:ietf:params:xml:ns:icalendar-2.0"', pretty_print=True):
+        if pretty_print:
+            eol_ = '\n'
+        else:
+            eol_ = ''
+        outfile.write('<%s%s%s' % (namespace_, name_, namespacedef_))
+        already_processed = set()
+        if self.hasContent_():
+            outfile.write('>%s' % (eol_, ))
+            showIndent(outfile, level + 2, pretty_print)
+            outfile.write('%s%s' % (self.value,eol_))
+            showIndent(outfile, level + 1, pretty_print)
+            outfile.write('</%s%s>%s' % (namespace_, name_, eol_))
+        else:
+            outfile.write('/>%s' % (eol_, ))
+    def exportAttributes(self, outfile, level, already_processed, namespace_='xcal:', name_='text '):
+        super(Text, self).exportAttributes(outfile, level, already_processed, namespace_, name_='text ')
+    def exportChildren(self, outfile, level, namespace_='xcal:', name_='text ', fromsubclass_=False, pretty_print=True):
+        if pretty_print:
+            eol_ = '\n'
+        else:
+            eol_ = ''
+    def build(self, node):
+        already_processed = set()
+        self.buildAttributes(node, node.attrib, already_processed)
+        for child in node:
+            nodeName_ = Tag_pattern_.match(child.tag).groups()[-1]
+            self.buildChildren(child, node, nodeName_)
+        return self
+    def buildAttributes(self, node, attrs, already_processed):
+        super(Text, self).buildAttributes(node, attrs, already_processed)
+    def buildChildren(self, child_, node, nodeName_, fromsubclass_=False):
+        super(Text, self).buildChildren(child_, node, nodeName_, True)
+# end class Text
 
 
 class EiResponseType(GeneratedsSuper):
@@ -6827,7 +6898,10 @@ class signalPayloadType(StreamPayloadBaseType):
         else:
             eol_ = ''
         if self.payloadBase is not None:
-            self.payloadBase.export(outfile, level, namespace_, name_='payloadBase', pretty_print=pretty_print)
+            if self.payloadBase.payloadFloat is not None:
+                self.payloadBase.payloadFloat.export(outfile, level, namespace_='ei:', name_='payloadFloat', pretty_print=pretty_print)
+            else:
+                self.payloadBase.export(outfile, level, namespace_, name_='payloadBase', pretty_print=pretty_print)
     def build(self, node):
         already_processed = set()
         self.buildAttributes(node, node.attrib, already_processed)
@@ -7158,7 +7232,7 @@ class EiTargetType(GeneratedsSuper):
 class eiEventSignalType(GeneratedsSuper):
     subclass = None
     superclass = None
-    def __init__(self, intervals=None, eiTarget=None, signalName=None, signalType=None, signalID=None, itemBase=None, currentValue=None):
+    def __init__(self, intervals=None, eiTarget=None, signalName=None, signalType=None, signalID=None, itemBase=None, currentValue=None, currencyPerKWh=None):
         self.original_tagname_ = None
         self.intervals = intervals
         self.eiTarget = eiTarget
@@ -7166,6 +7240,7 @@ class eiEventSignalType(GeneratedsSuper):
         self.signalType = signalType
         self.signalID = signalID
         self.itemBase = itemBase
+        self.currencyPerKWh = currencyPerKWh
         self.currentValue = currentValue
     def factory(*args_, **kwargs_):
         if CurrentSubclassModule_ is not None:
@@ -7190,6 +7265,8 @@ class eiEventSignalType(GeneratedsSuper):
     def set_signalID(self, signalID): self.signalID = signalID
     def get_itemBase(self): return self.itemBase
     def set_itemBase(self, itemBase): self.itemBase = itemBase
+    def get_currencyPerKWh(self): return self.currencyPerKWh
+    def set_currencyPerKWh(self, currencyPerKWh): self.currencyPerKWh = currencyPerKWh
     def get_currentValue(self): return self.currentValue
     def set_currentValue(self, currentValue): self.currentValue = currentValue
     def hasContent_(self):
@@ -7200,7 +7277,8 @@ class eiEventSignalType(GeneratedsSuper):
             self.signalType is not None or
             self.signalID is not None or
             self.itemBase is not None or
-            self.currentValue is not None
+            self.currentValue is not None or
+            self.currencyPerKWh is not None
         ):
             return True
         else:
@@ -7250,6 +7328,8 @@ class eiEventSignalType(GeneratedsSuper):
             self.itemBase.export(outfile, level, namespace_, name_='itemBase', pretty_print=pretty_print)
         if self.currentValue is not None:
             self.currentValue.export(outfile, level, namespace_='ei:', name_='currentValue', pretty_print=pretty_print)
+        if self.currencyPerKWh is not None:
+            self.currencyPerKWh.export(outfile, level, namespace_, name_='currencyPerKWh', pretty_print=pretty_print)
     def build(self, node):
         already_processed = set()
         self.buildAttributes(node, node.attrib, already_processed)
@@ -7438,6 +7518,11 @@ class eiEventSignalType(GeneratedsSuper):
             obj_.build(child_)
             self.currentValue = obj_
             obj_.original_tagname_ = 'currentValue'
+        elif nodeName_ == 'currencyPerKWh':
+            obj_ = currentValueType.factory()
+            obj_.build(child_)
+            self.currencyPerKWh = obj_
+            obj_.original_tagname_ = 'currencyPerKWh'
 # end class eiEventSignalType
 
 

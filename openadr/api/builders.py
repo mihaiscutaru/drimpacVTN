@@ -66,6 +66,7 @@ import random
 from django.views.decorators.csrf import csrf_exempt
 from io import StringIO
 import isodate
+import json
 from isodate import isoduration
 from rest_framework import viewsets
 from rest_framework.response import Response
@@ -156,12 +157,12 @@ class OADRDistributeEventBuilder(PayloadXML):
 
     @staticmethod
     def build_event_descriptor(site_event):
-        event_id = site_event.dr_event.event_id
+        event_id = site_event.dr_event.event_id + 1
         modification_number = site_event.dr_event.modification_number
 
         modification_reason = None
         priority = 1
-        test_event = False
+        test_event = 'false'
         vtn_comment = None
 
         created_date_time = datetime.isoformat(datetime.now())
@@ -200,11 +201,14 @@ class OADRDistributeEventBuilder(PayloadXML):
         duration = isoduration.Duration(seconds=seconds)
         iso_duration = isoduration.duration_isoformat(duration)  # duration in iso format
         duration = oadr_20b.DurationPropType(duration=iso_duration)
+        tolerate = oadr_20b.tolerateType(startafter="PT0M")
+        tolerance = oadr_20b.toleranceType(tolerate=tolerate)
 
         x_ei_notification = oadr_20b.DurationPropType(duration=iso_duration)
         dtstart = oadr_20b.dtstart(date_time=event_start)
         properties = oadr_20b.properties(dtstart=dtstart,
                                          duration=duration,
+                                         tolerance=tolerance,
                                          x_eiNotification=x_ei_notification,
                                          x_eiRampUp=None, x_eiRecovery=None)
 
@@ -216,28 +220,35 @@ class OADRDistributeEventBuilder(PayloadXML):
 
     @staticmethod
     def build_event_signal(site_event):
-        event_start = site_event.dr_event.start
-        event_end = site_event.dr_event.end
-        event_duration = event_end - event_start
+        signal_type = site_event.dr_event.signal_type
+        signal_name = site_event.dr_event.signal_name
+        interval = []
+        invals = json.loads(site_event.dr_event.intervals.replace("'", "\""))
 
-        seconds = event_duration.seconds
+        for inval in invals:
+            event_start = site_event.dr_event.start
+            event_end = site_event.dr_event.end
+            event_duration = event_end - event_start
+            
+            # datetime.timedelta only has a seconds property, so pass in seconds to duration
+            duration = isoduration.Duration(minutes=int(inval['duration']))
 
-        # datetime.timedelta only has a seconds property, so pass in seconds to duration
-        duration = isoduration.Duration(seconds=seconds)
-
-        iso_duration = isoduration.duration_isoformat(duration)  # duration in iso format
-        duration = oadr_20b.DurationPropType(duration=iso_duration)
-        dtstart = oadr_20b.dtstart(date_time=event_start)
-        properties = oadr_20b.properties(dtstart=dtstart, duration=duration)
-        report_interval = [oadr_20b.WsCalendarIntervalType(properties=properties)]
-        
-        interval = [oadr_20b.IntervalType(dtstart=dtstart, duration=duration, uid=uuid.uuid4() )]
+            iso_duration = isoduration.duration_isoformat(duration)  # duration in iso format
+            duration = oadr_20b.DurationPropType(duration=iso_duration)
+            dtstart = oadr_20b.dtstart(date_time=event_start)
+            floatPayload = oadr_20b.PayloadFloatType(value = float(inval['signalPayload']))
+            intValue = oadr_20b.currentValueType(payloadFloat = floatPayload)
+            signalPayload = oadr_20b.signalPayloadType(payloadBase=intValue)
+            uid = oadr_20b.Text(value=inval['uid'])
+            interval.append(oadr_20b.IntervalType(duration=duration, uid=uid, streamPayloadBase= signalPayload))
         intervals = oadr_20b.intervals(interval=interval)
         
         valuePayload = oadr_20b.PayloadFloatType(value = 3.14)
+        currency = oadr_20b.currencyType(itemDescription='currencyPerKWh',siScaleCode=None,itemUnits='EUR')
         eventValue = oadr_20b.currentValueType(payloadFloat = valuePayload)
-        return [oadr_20b.eiEventSignalType(intervals=intervals, signalName='simple',
-                                           signalType='level', currentValue= eventValue)]
+        return [oadr_20b.eiEventSignalType(intervals=intervals, signalName=signal_name,
+                                           signalType=signal_type, currentValue= eventValue,
+                                           currencyPerKWh=currency)]
 
 
 class OADRRegisteredReportBuilder(PayloadXML):

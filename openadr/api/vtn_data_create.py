@@ -14,8 +14,18 @@
 
          Example Run:
 
-         curl -X POST -d '{"type":"event","drprogram":"Program1","event_start":"2020-01-30T02:15:42","event_end":"2020-01-30T02:16:52","event_notification":"2020-01-30T02:14"}' --header "Content-Type: application/json"  http://127.0.0.1:8000/vtn_data_create
-
+         curl -X POST -d '{"type":"event","drprogram":"Program1","event_start":"2020-01-30T02:15:42","event_end":"2020-01-31T02:15:42","event_notification":"2020-01-30T02:14:12",\
+            "signalName": "ELECTRICITY_PRICE", "signalType": "price", "intervals": [{ "duration": "60", "uid": 1, "signalPayload": "3.0"  }, \
+            { "duration": "60", "uid": 2, "signalPayload": "5.0"  }, { "duration": "60", "uid": 3, "signalPayload": "3.0"  }, { "duration": "60", "uid": 4, "signalPayload": "5.0"  }, \
+            { "duration": "60", "uid": 5, "signalPayload": "3.0"  }, { "duration": "60", "uid": 6, "signalPayload": "4.0"  }, { "duration": "60", "uid": 7, "signalPayload": "3.0"  }, \
+            { "duration": "60", "uid": 8, "signalPayload": "4.0"  }, { "duration": "60", "uid": 9, "signalPayload": "5.0"  }, { "duration": "60", "uid": 10, "signalPayload": "6.0"  }, \
+            { "duration": "60", "uid": 11, "signalPayload": "8.0"  }, { "duration": "60", "uid": 12, "signalPayload": "4.0"  }, { "duration": "60", "uid": 13, "signalPayload": "3.0"  }, \
+            { "duration": "60", "uid": 14, "signalPayload": "1.0"  }, { "duration": "60", "uid": 15, "signalPayload": "7.0"  }, { "duration": "60", "uid": 16, "signalPayload": "6.0"  }, \
+            { "duration": "60", "uid": 17, "signalPayload": "5.0"  }, { "duration": "60", "uid": 18, "signalPayload": "1.0"  }, { "duration": "60", "uid": 19, "signalPayload": "4.0"  }, \
+            { "duration": "60", "uid": 20, "signalPayload": "5.0"  }, { "duration": "60", "uid": 21, "signalPayload": "2.0"  }, { "duration": "60", "uid": 22, "signalPayload": "3.0"  }, \
+            { "duration": "60", "uid": 23, "signalPayload": "1.0"  }, { "duration": "60", "uid": 24, "signalPayload": "3.0"  } ]}' --header "Content-Type: application/json"  http://127.0.0.1:8000/vtn_data_create
+         
+         
       In case of a "program" type:
          "name": The DR Program name to be added
          "sites": The VENs names in a string variable separated by comma e.g "site1,site2"
@@ -86,12 +96,12 @@ class VtnDataCreate(APIView):
       req = json.dumps(request.data)
       req = json.loads(req)
       if req['type'] == 'event':
-         response = self.create_event(req['drprogram'], req['event_start'], req['event_end'], req['event_notification'])
-         self.get_status(response)
+         response = self.create_event(req['drprogram'], req['event_start'], req['event_end'], req['event_notification'], req['signalName'], req['signalType'], req['intervals'])
+         status = self.get_status(response)
          return Response(response, content_type='application/json', status=status)
       elif req['type'] == 'program':
          response = self.create_program(req['name'], req['sites'])
-         self.get_status(response)
+         status = self.get_status(response)
          return Response(response, content_type='application/json', status=status)
       elif req['type'] == 'customer':
          response = self.create_customer(req['name'], req['utility_id'],req['contact_name'],req['phone_number'])
@@ -102,7 +112,7 @@ class VtnDataCreate(APIView):
          status = self.get_status(response)
          return Response(response, content_type='application/json', status=status)
 
-   def create_event(self,drprogram,event_start,event_end,event_notification):
+   def create_event(self,drprogram,event_start,event_end,event_notification, signal_name, signal_type, intervals):
       try:
          query = DRProgram.objects.filter(Q(name=drprogram))
          dr_program = query[0]
@@ -118,6 +128,7 @@ class VtnDataCreate(APIView):
 
       now = datetime.now()
       try:
+         interval = json.loads(json.dumps(str(intervals)))
          event_notification = datetime.strptime(event_notification, '%Y-%m-%dT%H:%M:%S').strftime('%Y-%m-%dT%H:%M:%S')
          event_start = datetime.strptime(event_start, '%Y-%m-%dT%H:%M:%S').strftime('%Y-%m-%dT%H:%M:%S')
          event_end = datetime.strptime(event_end, '%Y-%m-%dT%H:%M:%S').strftime('%Y-%m-%dT%H:%M:%S')
@@ -127,6 +138,9 @@ class VtnDataCreate(APIView):
                 scheduled_notification_time=event_notification,
                 start=event_start,
                 end=event_end,
+                signal_name=signal_name,
+                signal_type=signal_type,
+                intervals=interval,
                 modification_number=0,
                 status='far',
                 superseded=False,
@@ -136,6 +150,7 @@ class VtnDataCreate(APIView):
       event.save()
 
       # We have a site at this point
+      site=Site.objects.filter(Q(ven_id=dr_program.sites.values()[0]['ven_id']))[0]
       s = SiteEvent(dr_event=event,
               status='far',
               last_status_time=datetime.now(),
