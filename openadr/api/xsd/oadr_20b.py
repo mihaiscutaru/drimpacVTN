@@ -5151,7 +5151,7 @@ class properties(GeneratedsSuper):
         if self.duration is not None:
             self.duration.export(outfile, level, namespace_='xcal:', name_='duration', pretty_print=pretty_print)
         if self.tolerance is not None:
-            self.tolerance.export(outfile, level, namespace_, name_='tolerance', pretty_print=pretty_print)
+            self.tolerance.export(outfile, level, namespace_='xcal:', name_='tolerance', pretty_print=pretty_print)
         if self.x_eiNotification is not None:
             self.x_eiNotification.export(outfile, level, namespace_='ei:', name_='x-eiNotification', pretty_print=pretty_print)
         if self.x_eiRampUp is not None:
@@ -5774,7 +5774,7 @@ class IntervalType(GeneratedsSuper):
             self.dtstart is not None or
             self.duration is not None or
             self.uid is not None or
-            self.streamPayloadBase
+            self.streamPayloadBase is not None
         ):
             return True
         else:
@@ -5814,13 +5814,12 @@ class IntervalType(GeneratedsSuper):
         if self.uid is not None:
             showIndent(outfile, level, pretty_print)
             outfile.write('<%suid %s>%s' % ('xcal:', 'xmlns:xcal="urn:ietf:params:xml:ns:icalendar-2.0"', eol_))
-            showIndent(outfile, level+1, pretty_print)
-            self.uid.export(outfile, level, namespace_='xcal:', name_='text ', pretty_print=pretty_print)
+            self.uid.export(outfile, level+1, namespace_='xcal:', name_='text ', pretty_print=pretty_print)
             showIndent(outfile, level, pretty_print)
             outfile.write('</%suid>%s' % ("xcal:", eol_))
         for streamPayloadBase_ in self.streamPayloadBase:
-            if type(streamPayloadBase_) == signalPayloadType:
-                streamPayloadBase_.export(outfile, level, namespace_, name_='signalPayload', pretty_print=pretty_print)
+            if type(self.streamPayloadBase[0]) == signalPayloadType:
+                streamPayloadBase_.export(outfile, level, namespace_='ei:', name_='signalPayload', pretty_print=pretty_print)
             else:
                 streamPayloadBase_.export(outfile, level, namespace_, name_='streamPayloadBase', pretty_print=pretty_print)
     def build(self, node):
@@ -6155,16 +6154,9 @@ class Text(GeneratedsSuper):
             eol_ = '\n'
         else:
             eol_ = ''
-        outfile.write('<%s%s%s' % (namespace_, name_, namespacedef_))
+        showIndent(outfile, level, pretty_print)
+        outfile.write('<%s%s%s>%s</%s%s>%s' % (namespace_, name_, namespacedef_, self.value, namespace_, name_, eol_))
         already_processed = set()
-        if self.hasContent_():
-            outfile.write('>%s' % (eol_, ))
-            showIndent(outfile, level + 2, pretty_print)
-            outfile.write('%s%s' % (self.value,eol_))
-            showIndent(outfile, level + 1, pretty_print)
-            outfile.write('</%s%s>%s' % (namespace_, name_, eol_))
-        else:
-            outfile.write('/>%s' % (eol_, ))
     def exportAttributes(self, outfile, level, already_processed, namespace_='xcal:', name_='text '):
         super(Text, self).exportAttributes(outfile, level, already_processed, namespace_, name_='text ')
     def exportChildren(self, outfile, level, namespace_='xcal:', name_='text ', fromsubclass_=False, pretty_print=True):
@@ -17725,7 +17717,7 @@ class toleranceType(GeneratedsSuper):
             return True
         else:
             return False
-    def export(self, outfile, level, namespace_='oadr:', name_='toleranceType', namespacedef_='xmlns:oadr="http://openadr.org/oadr-2.0b/2012/07"', pretty_print=True):
+    def export(self, outfile, level, namespace_='xcal:', name_='toleranceType', namespacedef_='xmlns:oadr="http://openadr.org/oadr-2.0b/2012/07"', pretty_print=True):
         imported_ns_def_ = GenerateDSNamespaceDefs_.get('toleranceType')
         if imported_ns_def_ is not None:
             namespacedef_ = imported_ns_def_
@@ -17741,14 +17733,14 @@ class toleranceType(GeneratedsSuper):
         self.exportAttributes(outfile, level, already_processed, namespace_, name_='toleranceType')
         if self.hasContent_():
             outfile.write('>%s' % (eol_, ))
-            self.exportChildren(outfile, level + 1, namespace_='oadr:', name_='toleranceType', pretty_print=pretty_print)
+            self.exportChildren(outfile, level + 1, namespace_='xcal:', name_='toleranceType', pretty_print=pretty_print)
             showIndent(outfile, level, pretty_print)
             outfile.write('</%s%s>%s' % (namespace_, name_, eol_))
         else:
             outfile.write('/>%s' % (eol_, ))
-    def exportAttributes(self, outfile, level, already_processed, namespace_='oadr:', name_='toleranceType'):
+    def exportAttributes(self, outfile, level, already_processed, namespace_='xcal:', name_='toleranceType'):
         pass
-    def exportChildren(self, outfile, level, namespace_='oadr:', name_='toleranceType', fromsubclass_=False, pretty_print=True):
+    def exportChildren(self, outfile, level, namespace_='xcal:', name_='toleranceType', fromsubclass_=False, pretty_print=True):
         if pretty_print:
             eol_ = '\n'
         else:
@@ -17807,7 +17799,7 @@ class tolerateType(GeneratedsSuper):
             return True
         else:
             return False
-    def export(self, outfile, level, namespace_='oadr:', name_='tolerateType', namespacedef_='xmlns:oadr="http://openadr.org/oadr-2.0b/2012/07" xmlns:xcal="urn:ietf:params:xml:ns:icalendar-2.0" ', pretty_print=True):
+    def export(self, outfile, level, namespace_='xcal:', name_='tolerateType', namespacedef_='xmlns:oadr="http://openadr.org/oadr-2.0b/2012/07" xmlns:xcal="urn:ietf:params:xml:ns:icalendar-2.0" ', pretty_print=True):
         imported_ns_def_ = GenerateDSNamespaceDefs_.get('tolerateType')
         if imported_ns_def_ is not None:
             namespacedef_ = imported_ns_def_
@@ -17823,14 +17815,14 @@ class tolerateType(GeneratedsSuper):
         self.exportAttributes(outfile, level, already_processed, namespace_, name_='tolerateType')
         if self.hasContent_():
             outfile.write('>%s' % (eol_, ))
-            self.exportChildren(outfile, level + 1, namespace_='oadr:', name_='tolerateType', pretty_print=pretty_print)
+            self.exportChildren(outfile, level + 1, namespace_='xcal:', name_='tolerateType', pretty_print=pretty_print)
             showIndent(outfile, level, pretty_print)
             outfile.write('</%s%s>%s' % (namespace_, name_, eol_))
         else:
             outfile.write('/>%s' % (eol_, ))
-    def exportAttributes(self, outfile, level, already_processed, namespace_='oadr:', name_='tolerateType'):
+    def exportAttributes(self, outfile, level, already_processed, namespace_='xcal:', name_='tolerateType'):
         pass
-    def exportChildren(self, outfile, level, namespace_='oadr:', name_='tolerateType', fromsubclass_=False, pretty_print=True):
+    def exportChildren(self, outfile, level, namespace_='xcal:', name_='tolerateType', fromsubclass_=False, pretty_print=True):
         if pretty_print:
             eol_ = '\n'
         else:

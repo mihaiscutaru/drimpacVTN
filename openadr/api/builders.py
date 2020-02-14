@@ -240,7 +240,7 @@ class OADRDistributeEventBuilder(PayloadXML):
             intValue = oadr_20b.currentValueType(payloadFloat = floatPayload)
             signalPayload = oadr_20b.signalPayloadType(payloadBase=intValue)
             uid = oadr_20b.Text(value=inval['uid'])
-            interval.append(oadr_20b.IntervalType(duration=duration, uid=uid, streamPayloadBase= signalPayload))
+            interval.append(oadr_20b.IntervalType(streamPayloadBase=signalPayload, duration=duration, uid=uid))
         intervals = oadr_20b.intervals(interval=interval)
         
         valuePayload = oadr_20b.PayloadFloatType(value = 3.14)
