@@ -295,10 +295,10 @@ def dr_event_export(request, pk):
 
     writer = csv.writer(response)
 
-    writer.writerow(['DR Program', 'Site', 'Time', 'Baseline Power (kw)', 'Measured Power (kw)'])
+    writer.writerow(['DR Program', 'Site', 'Time', 'Baseline Power (kw)', 'Measured Power (kw)', 'Battery Voltage (v)'])
     for datum in t_data:
         writer.writerow([event.dr_program, datum.site, datum.created_on.strftime("%Y-%m-%d %I:%M:%S %p"),
-                        datum.baseline_power_kw, datum.measured_power_kw])
+                        datum.baseline_power_kw, datum.measured_power_kw,datum.battery.voltage_v])
     return response
 
 
@@ -578,6 +578,7 @@ def get_dr_event_details(request, pk):
         .values('date_slice', 'site') \
         .annotate(avg_baseline_power_kw=Avg('baseline_power_kw'),
                   avg_measured_power_kw=Avg('measured_power_kw'),
+                  avg_battery_voltage_v=Avg('battery_voltage_v'),
                   time=Min('created_on'))
     if t_data.count() == 0:
         context['no_data_for_sites'] = 'True'
@@ -596,6 +597,7 @@ def get_dr_event_details(request, pk):
 
         sum_baseline = {}
         sum_measured = {}
+        sum_voltage = {}
         for datum in t_data:
             if datum['date_slice'] in sum_baseline:
                 sum_baseline[datum['date_slice']] += datum['avg_baseline_power_kw']
@@ -605,9 +607,14 @@ def get_dr_event_details(request, pk):
                 sum_measured[datum['date_slice']] += datum['avg_measured_power_kw']
             else:
                 sum_measured[datum['date_slice']] = datum['avg_measured_power_kw']
+            if datum['date_slice'] in sum_voltage:
+                sum_voltage[datum['date_slice']] += datum['avg_battery_voltage_v']
+            else:
+                sum_voltage[datum['date_slice']] = datum['avg_battery_voltage_v']
 
         context['sum_baseline'] = OrderedDict(sorted(sum_baseline.items(), key=lambda t: t[0]))
         context['sum_measured'] = OrderedDict(sorted(sum_measured.items(), key=lambda t: t[0]))
+        context['sum_voltage'] = OrderedDict(sorted(sum_voltage.items(), key=lambda t: t[0]))
         context['no_data_for_sites'] = 'False'
 
         return render(request, 'vtn/dr_event_customer_detail.html', context)
@@ -679,6 +686,7 @@ class DREventDetail(TemplateView):
                                       .values('date_slice', 'site') \
                                       .annotate(avg_baseline_power_kw=Avg('baseline_power_kw'),
                                                 avg_measured_power_kw=Avg('measured_power_kw'),
+                                                avg_battery_voltage_v=Avg('battery_voltage_v'),
                                                 time=Min('created_on'))
 
             co = t_data.order_by('-created_on')
@@ -694,6 +702,7 @@ class DREventDetail(TemplateView):
 
             sum_baseline = {}
             sum_measured = {}
+            sum_voltage = {}
             for datum in t_data:
                 if datum['date_slice'] in sum_baseline:
                     sum_baseline[datum['date_slice']] += datum['avg_baseline_power_kw']
@@ -703,9 +712,14 @@ class DREventDetail(TemplateView):
                     sum_measured[datum['date_slice']] += datum['avg_measured_power_kw']
                 else:
                     sum_measured[datum['date_slice']] = datum['avg_measured_power_kw']
+                if datum['date_slice'] in sum_voltage:
+                    sum_voltage[datum['date_slice']] += datum['avg_battery_voltage_v']
+                else:
+                    sum_voltage[datum['date_slice']] = datum['avg_battery_voltage_v']
 
             context['sum_baseline'] = OrderedDict(sorted(sum_baseline.items(), key=lambda t: t[0]))
             context['sum_measured'] = OrderedDict(sorted(sum_measured.items(), key=lambda t: t[0]))
+            context['sum_voltage'] = OrderedDict(sorted(sum_voltage.items(), key=lambda t: t[0]))
 
         return context
 
@@ -723,6 +737,8 @@ def get_most_recent_stat(dr_event, site):
                                   .order_by('-reported_on')[0]
         if t_data.baseline_power_kw is not None:
             return t_data.baseline_power_kw - t_data.measured_power_kw
+        elif t_data.battery_voltage_v is not None:
+            return t_data.battery_voltage_v
         else:
             return t_data.measured_power_kw
     except (IndexError, Exception):

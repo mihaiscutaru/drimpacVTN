@@ -82,6 +82,10 @@ class VtnDataDelete(APIView):
          response = self.delete_customer(req['customer'])
          status = self.get_status(response)
          return Response(response, content_type='application/json', status=status)
+      elif req['type'] == 'report':
+         response = self.delete_report(req['report'])
+         status = self.get_status(response)
+         return Response(response, content_type='application/json', status=status)
       elif req['type'] == 'ven':
          response = self.delete_ven(req['ven'])
          status = self.get_status(response)
@@ -110,6 +114,15 @@ class VtnDataDelete(APIView):
       try:
          customer = Customer.objects.filter(Q(id=customer))
          customer.delete()
+         return data
+      except Exception as e:
+         data['status'] = '"ERROR: %s}' % e
+         return data
+   def delete_report(self, report):
+      data = json.loads('{ "data": [],"status": "OK"}')
+      try:
+         report = Report.objects.filter(Q(report_request_id=report))
+         report.delete()
          return data
       except Exception as e:
          data['status'] = '"ERROR: %s}' % e

@@ -116,7 +116,8 @@ class OADRRenderer(XMLRenderer):
                           1,
                           pretty_print = make_pretty
                           )
-        return buffer.getvalue()
+        current_value = buffer.getvalue()
+        return current_value
 
     def render(self, data, accepted_media_type=None, renderer_context=None):
 
@@ -128,7 +129,7 @@ class OADRRenderer(XMLRenderer):
         else:
             make_pretty = True # 'html' in accepted_media_type
             data['rendered_result'] = self.export(data['result'], make_pretty)
-
+        
         return data['rendered_result']
 
 
@@ -345,6 +346,7 @@ class EIReport(APIView):
                     if start is not None:
                         baseline_power = 'n.a.'
                         actual_power = 'n.a.'
+                        battery_voltage = 'n.a.'
                         report_payloads = interval.streamPayloadBase
                         for report_payload in report_payloads:
                             rID = report_payload.rID
@@ -352,12 +354,15 @@ class EIReport(APIView):
                                 baseline_power = report_payload.payloadBase.value
                             elif rID == 'actual_power':
                                 actual_power = report_payload.payloadBase.value
+                            elif rID == 'battery_voltage':
+                                battery_voltage = report_payload.payloadBase.value
                         reported_on = pytz.timezone(settings.TIME_ZONE).localize(datetime.now())
-                        if baseline_power != 'n.a.' and actual_power != 'n.a.':
+                        if baseline_power != 'n.a.' and actual_power != 'n.a.' and battery_voltage != 'n.a.':
                             t = Telemetry(site=site, created_on=start,
                                           reported_on=reported_on,
                                           baseline_power_kw=baseline_power,
-                                          measured_power_kw=actual_power)
+                                          measured_power_kw=actual_power,
+                                          battery_voltage_v=battery_voltage)
                             t.save()
             payload_response = OADRResponseBuilder(SCHEMA_VERSION,
                                                    200,
